@@ -1,5 +1,6 @@
 """Test attribute selectors."""
 from .. import util
+import soupsieve as sv
 
 
 class TestAttribute(util.TestCase):
@@ -50,3 +51,23 @@ class TestAttribute(util.TestCase):
             ["div", "0", "1", "2", "3", "pre", "4", "6"],
             flags=util.HTML5
         )
+
+    def test_bad_attribute_unclused(self):
+        """Test bad attribute fails for syntax error, not timeout error."""
+
+        self.assert_raises_before_timeout('[a="' + ('x' * 300), sv.SelectorSyntaxError)
+
+    def test_bad_attribute_unclosed_single_quote(self):
+        """Test bad attribute with unclosed single quote fails for syntax error, not timeout error."""
+
+        self.assert_raises_before_timeout("[a='" + ('x' * 300), sv.SelectorSyntaxError)
+
+    def test_bad_attribute_unclosed_not_equal(self):
+        """Test bad attribute with unclosed quote and `!=` fails for syntax error, not timeout error."""
+
+        self.assert_raises_before_timeout('[a!="' + ('x' * 300), sv.SelectorSyntaxError)
+
+    def test_bad_attribute_unclosed_line_break(self):
+        """Test bad attribute with quote broken by a raw line break fails for syntax error, not timeout."""
+
+        self.assert_raises_before_timeout('[a="' + ('x' * 300) + '\n"]', sv.SelectorSyntaxError)

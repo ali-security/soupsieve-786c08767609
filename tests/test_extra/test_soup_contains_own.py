@@ -1,5 +1,6 @@
 """Test contains selectors."""
 from .. import util
+import soupsieve as sv
 
 
 class TestSoupContainsOwn(util.TestCase):
@@ -110,3 +111,9 @@ class TestSoupContainsOwn(util.TestCase):
             [],
             flags=util.HTML
         )
+
+    def test_contains_own_unclosed_quote(self):
+        """Test contains-own with an unclosed quoted value fails for syntax error, not timeout error."""
+
+        self.assert_raises_before_timeout(':-soup-contains-own("' + ('x' * 300), sv.SelectorSyntaxError)
+        self.assert_raises_before_timeout(":-soup-contains-own('" + ('x' * 300), sv.SelectorSyntaxError)

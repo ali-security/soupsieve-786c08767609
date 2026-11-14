@@ -1,5 +1,6 @@
 """Test utilities."""
 import unittest
+import signal
 import bs4
 import textwrap
 import soupsieve as sv
@@ -102,6 +103,31 @@ class TestCase(unittest.TestCase):
         print('----Running Assert Test----')
         with self.assertRaises(exception):
             self.compile_pattern(pattern, namespaces=namespace, custom=custom)
+
+    def assert_raises_before_timeout(self, pattern, exception, timeout=3):
+        """Assert compiling the pattern raises the exception and does not hang (catastrophic backtracking)."""
+
+        # `SIGALRM` is not available on all platforms (Windows).
+        if not hasattr(signal, 'SIGALRM'):
+            raise pytest.skip('SIGALRM is not available on this platform')
+
+        def timeout_handler(signum, frame):
+            raise TimeoutError
+
+        previous = signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(timeout)
+
+        passed = False
+        try:
+            with self.assertRaises(exception):
+                sv.compile(pattern)
+            passed = True
+        except TimeoutError:
+            pass
+        finally:
+            signal.alarm(0)
+            signal.signal(signal.SIGALRM, previous if previous is not None else signal.SIG_DFL)
+        self.assertTrue(passed, 'Compiling {!r} timed out'.format(pattern))
 
     def assert_selector(self, markup, selectors, expected_ids, namespaces={}, custom=None, flags=0):
         """Assert selector."""
